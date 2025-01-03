@@ -1,4 +1,3 @@
-# save this as process_images.py
 import cv2
 import os
 from doclayout_yolo import YOLOv10
@@ -25,7 +24,7 @@ def process_images(model_path: str, input_folder: str, output_folder: str, imgsz
 
             # 标注结果
             annotated_frame = det_res[0].plot(pil=True, line_width=5, font_size=20)
-
+            print(det_res[0].names)
             # 保存结果到指定的输出文件夹
             result_path = os.path.join(output_folder, filename)
             cv2.imwrite(result_path, annotated_frame)
