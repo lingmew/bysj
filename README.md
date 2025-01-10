@@ -1,6 +1,11 @@
 # 毕业设计
 毕设存档
 
+启动：
+conda activate bysj
+D:
+cd D:\learn\bysj
+
 类别：
 {0: 'title',
  1: 'plain text', 
