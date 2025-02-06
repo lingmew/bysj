@@ -88,6 +88,6 @@ def process_images(model_path: str, input_folder: str, output_folder: str):
 # 如果需要直接运行此文件，可以使用以下代码
 if __name__ == "__main__":
     model_path = "./model/doclayout_yolo_docstructbench_imgsz1024.pt"
-    input_folder = "./datasets/example/"
-    output_folder = "./results/"
+    input_folder = "./datasets/test/"
+    output_folder = "./test_results_split/"
     process_images(model_path, input_folder, output_folder)

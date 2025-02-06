@@ -1,0 +1,25 @@
+DBHandscaledphotosoftheentiretreeand
+firstnodeweretakenfor30Ginkgo.
+Tree
+height,
+mother
+diameter，
+daughter
+diameter,andanglebetweenbranchesofthe
+basal node were measured usingImageJ (NiH).
+For
+each
+modelaregression
+compared
+observed
+dataformotheranddaughter
+attributes,
+and
+predicted
+values
+were
+generatedusingresidualsfromtheobserved
+dataregression.AnANcovAcomparedslope
+andy-interceptoftheobservedregression
+andthepredicted.
+

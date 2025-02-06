@@ -1,0 +1,7 @@
+ExAMPLE8.Inadigital communicationssystem,onetransmitsO'sand 1's
+througha"noisy”channel thatperformsasfollows:withprobabilityp the
+transmittedandthereceiveddigitsaredifferent.Itiscalledabinarysymmetric
+channel(seeFig.10).SupposethataOisemittedwithprobabilityπoanda1
+withprobabilityπ=1-To.Whatistheprobabilityofobtaining1atthe
+receivingend?
+

@@ -1,0 +1,12 @@
+----- plain_text -----
+HydraulicefficiencyispredictedbyMurray's
+Law,whichisbasedoffareabeingconserved
+atbranchingpoints.
+Structuralsupportoflimbsispredictedbythe
+UniformStressModel(USM).Over
+optimization(ratio>1) putsbranches atrisk of
+breaking,soasafetymarginmustbekept.
+Totalsizeisoptimizedunderthe
+West-Brown-Enquist(WBE)Model,ifover
+optimizedtreesaremoresusceptibletowind
+

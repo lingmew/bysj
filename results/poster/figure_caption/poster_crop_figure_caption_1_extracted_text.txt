@@ -1,0 +1,4 @@
+----- figure_caption -----
+Figure2.Node1
+imageforaGinkgo
+

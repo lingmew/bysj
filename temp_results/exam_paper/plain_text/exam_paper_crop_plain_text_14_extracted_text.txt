@@ -1,0 +1,10 @@
+A.AUB=R
+B.CA≤B
+C.ANB=B
+D.A≤B
+
+A.AUB=R
+B.CA≤B
+C.ANB=B
+D.A≤B
+

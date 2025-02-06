@@ -1,0 +1,5 @@
+----- figure_caption -----
+Figure3.
+NodeimagewithImageJ
+measurementslabeled.
+
