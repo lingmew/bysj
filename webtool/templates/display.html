@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial="1.0">
+    <title>图像标注</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            position: relative;
+        }
+        #annotationsList {
+            margin-top: 10px;
+        }
+        .annotation-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .delete-button {
+            background: red;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>图像标注</h1>
+<input type="text" id="search" placeholder="搜索图像名称..." onkeyup="searchImages()">
+
+<select id="imageSelect" onchange="showImage(this.value)">
+    <option value="">选择图像</option>
+    {% for image in images %}
+        <option value="{{ image }}">{{ image }}</option>
+    {% endfor %}
+</select>
+
+<div id="imageDisplay" style="display:none;">
+    <canvas id="annotationCanvas" width="640" height="640"></canvas>
+    <button id="saveAnnotations">保存标注</button>
+    <button id="endAnnotation">结束标注</button>
+    <div id="annotationsList"></div>
+    <select id="categorySelect">
+        <option value="">选择类别</option>
+        <option value="class_1">类别 1</option>
+        <option value="class_2">类别 2</option>
+        <option value="class_3">类别 3</option>
+    </select>
+</div>
+
+<a href="/">返回上传页面</a>
+
+<script>
+    let currentImage = '';
+    let annotations = [];
+    let drawing = false;
+    let startX, startY;
+    let img = new Image(); // 创建图像对象
+
+    // 设置不同类别对应的颜色
+    const categoryColors = {
+        "class_1": "rgba(255, 0, 0, 0.5)",
+        "class_2": "rgba(0, 255, 0, 0.5)",
+        "class_3": "rgba(0, 0, 255, 0.5)",
+    };
+
+    function showImage(imageName) {
+        if (!imageName) {
+            document.getElementById('imageDisplay').style.display = 'none';
+            return;
+        }
+
+        const imageDisplay = document.getElementById('imageDisplay');
+        const canvas = document.getElementById('annotationCanvas');
+        const ctx = canvas.getContext('2d');
+        currentImage = imageName;
+
+        img.src = `/result/${imageName}`; // 图像路径
+        img.onload = function() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, 640, 640);
+            drawExistingAnnotations(ctx);
+        };
+        img.onerror = function() {
+            console.error("Error loading image:", img.src);
+        };
+
+        imageDisplay.style.display = 'block';
+        clearAnnotationState();
+    }
+
+    function drawExistingAnnotations(ctx) {
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        ctx.drawImage(img, 0, 0, 640, 640); // 重新绘制图像
+        annotations.forEach(drawRect.bind(null, ctx));
+    }
+
+    function drawRect(ctx, rect) {
+        const fillColor = categoryColors[rect.category] || "rgba(255, 255, 255, 0.3)";
+        ctx.fillStyle = fillColor;
+        ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+        ctx.strokeStyle = 'black';
+        ctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+        ctx.fillStyle = 'black';
+        ctx.fillText(rect.category, rect.x + 5, rect.y + 15);
+    }
+
+    document.getElementById('annotationCanvas').addEventListener('mousedown', function(event) {
+        drawing = true;
+        const canvas = document.getElementById('annotationCanvas');
+        const rect = canvas.getBoundingClientRect();
+        startX = event.clientX - rect.left;
+        startY = event.clientY - rect.top;
+    });
+
+    document.getElementById('annotationCanvas').addEventListener('mousemove', function(event) {
+        if (drawing) {
+            const canvas = document.getElementById('annotationCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // 清空整个画布
+            ctx.drawImage(img, 0, 0, 640, 640); // 重新绘制图像
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            const width = x - startX;
+            const height = y - startY;
+            const category = document.getElementById('categorySelect').value;
+            const fillColor = categoryColors[category] || "rgba(255, 255, 255, 0.3)";
+            ctx.fillStyle = fillColor;
+            ctx.fillRect(startX, startY, width, height);
+            ctx.strokeStyle = 'black';
+            ctx.strokeRect(startX, startY, width, height);
+            if (category) {
+                ctx.fillStyle = 'black';
+                ctx.fillText(category, startX + 5, startY + 15);
+            }
+        }
+    });
+
+    document.getElementById('annotationCanvas').addEventListener('mouseup', function(event) {
+        if (drawing) {
+            const canvas = document.getElementById('annotationCanvas');
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            const width = x - startX;
+            const height = y - startY;
+
+            const category = document.getElementById('categorySelect').value;
+            if (!category) {
+                alert('请先选择标注框的类别');
+                return;
+            }
+
+            const newRect = {
+                x: startX,
+                y: startY,
+                width: width,
+                height: height,
+                category: category
+            };
+            annotations.push(newRect);
+            drawing = false;
+            drawExistingAnnotations(canvas.getContext('2d')); // 刷新图像和框
+            updateAnnotationsList();
+        }
+    });
+
+    function updateAnnotationsList() {
+        const annotationsList = document.getElementById('annotationsList');
+        annotationsList.innerHTML = '';
+        annotations.forEach((rect, index) => {
+            const listItem = document.createElement('div');
+            listItem.className = 'annotation-item';
+            listItem.innerText = `类别: ${rect.category}, 位置: (x: ${rect.x}, y: ${rect.y}, width: ${rect.width}, height: ${rect.height})`;
+            const deleteBtn = document.createElement('button');
+            deleteBtn.innerText = '删除';
+            deleteBtn.className = 'delete-button';
+            deleteBtn.onclick = function () {
+                deleteAnnotationByIndex(index);
+            };
+            listItem.appendChild(deleteBtn);
+            annotationsList.appendChild(listItem);
+        });
+    }
+
+    function deleteAnnotationByIndex(index) {
+        annotations.splice(index, 1);
+        drawExistingAnnotations(document.getElementById('annotationCanvas').getContext('2d'));
+        updateAnnotationsList();
+    }
+
+    document.getElementById('saveAnnotations').onclick = function() {
+        if (annotations.length === 0) {
+            alert("没有可保存的标注框!");
+            return;
+        }
+
+        annotations.forEach(rect => {
+            console.log(`保存标注: 类别: ${rect.category}, 位置: (${rect.x}, ${rect.y}, ${rect.width}, ${rect.height})`);
+        });
+    };
+
+    document.getElementById('endAnnotation').onclick = function() {
+        if (annotations.length === 0) {
+            alert("没有可保存的标注框!");
+            return;
+        }
+
+        const yoloFormat = annotations.map(rect => ({
+            category: rect.category,
+            coordinates: {
+                x: rect.x,
+                y: rect.y,
+                width: rect.width,
+                height: rect.height
+            }
+        }));
+
+        const json = JSON.stringify(yoloFormat, null, 2);
+        console.log("保存为 YOLO 格式:", json);
+    };
+
+    function searchImages() {
+        const input = document.getElementById('search');
+        const filter = input.value.toLowerCase();
+        const select = document.getElementById('imageSelect');
+        const options = select.options;
+
+        for (let i = 0; i < options.length; i++) {
+            const txtValue = options[i].textContent || options[i].innerText;
+            options[i].style.display = txtValue.toLowerCase().indexOf(filter) > -1 ? "" : "none";
+        }
+    }
+
+    function clearAnnotationState() {
+        annotations = [];
+        updateAnnotationsList();
+    }
+</script>
+</body>
+</html>

@@ -3,6 +3,7 @@ import os
 import zipfile
 import subprocess
 import threading
+from subprocess import Popen
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # 确保设置一个秘密密钥
@@ -13,16 +14,13 @@ RESULT_FOLDER = 'result'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # 处理状态
-processing = True
-print("初始1")
+processing = False
 
 
 def run_detection():
     global processing
     processing = True  # 标记为正在处理
-    print("开始1")
     try:
-        print("开始2")
 
         # 使用 subprocess.run() 运行 detect.py，并捕获输出
         result = subprocess.run(
@@ -47,7 +45,6 @@ def run_detection():
         print("完成2")
         processing = False  # 标记为处理完成
 
-
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -69,8 +66,8 @@ def upload_file():
             zip_ref.extractall(TEST_FOLDER)
 
         # 执行 run_detection 函数
-        threading.Thread(target=run_detection).start()
-
+        # threading.Thread(target=run_detection).start()
+        Popen(['python', 'detect.py'])
         # 返回处理中的页面
         return render_template('processing.html')
 
@@ -80,7 +77,7 @@ def upload_file():
 @app.route('/images')
 def image_list():
     images = os.listdir(RESULT_FOLDER)  # 从结果文件夹读取处理后的图像
-    return render_template('result.html', images=images)
+    return render_template('display.html', images=images)
 
 
 @app.route('/check_processing')
@@ -93,6 +90,14 @@ def check_processing():
 @app.route('/result/<filename>')
 def send_result(filename):
     return send_from_directory(RESULT_FOLDER, filename)
+
+
+@app.route('/generate-json', methods=['POST'])
+def generate_json():
+    annotations = request.json
+    with open('annotations.json', 'w') as json_file:
+        json.dump(annotations, json_file, indent=4)
+    return jsonify({'status': 'success'})
 
 
 if __name__ == '__main__':
