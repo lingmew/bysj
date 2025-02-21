@@ -25,7 +25,7 @@ def process_images(model_path: str, input_folder: str, output_folder: str, imgsz
 
             # 标注结果
             annotated_frame = det_res[0].plot(pil=True, line_width=5, font_size=20)
-            # print(det_res[0].names)
+            print(det_res[0].names)
             # 保存结果到指定的输出文件夹
             result_path = os.path.join(output_folder, filename)
             cv2.imwrite(result_path, annotated_frame)
@@ -36,7 +36,7 @@ def process_images(model_path: str, input_folder: str, output_folder: str, imgsz
 # 如果需要直接运行此文件，可以使用以下代码
 if __name__ == "__main__":
     model_path = "./model/doclayout_yolo_docstructbench_imgsz1024.pt"
-    input_folder = 'static/uploads/test'
-    output_folder = 'static/uploads/result'
+    input_folder = './datasets/example/'
+    output_folder = './result_detect'
     os.makedirs(output_folder, exist_ok=True)
     process_images(model_path, input_folder, output_folder, 1024, 0.15)

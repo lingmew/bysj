@@ -6,20 +6,15 @@ pip3 install torch==2.2.2 torchvision torchaudio --index-url https://download.py
 conda activate bysj
 D:
 cd D:\learn\bysj
+cd D:\learn\bysj\webtool
+python app.py
 
+图片：
+1024*1024
+{class_id} {x_center} {y_center} {width} {height}
 
-streamlit run main.py
 类别：
-{0: 'plain text',
- 1: 'plain text', 
- 2: 'abandon', 
- 3: 'figure', 
- 4: 'figure_caption', 
- 5: 'table', 
- 6: 'table_caption', 
- 7: 'table_footnote', 
- 8: 'isolate_formula', 
- 9: 'formula_caption'}
+{0: 'title', 1: 'plain text', 2: 'abandon', 3: 'figure', 4: 'figure_caption', 5: 'table', 6: 'table_caption', 7: 'table_footnote', 8: 'isolate_formula', 9: 'formula_caption'}
 
  更新至github：
  git add .

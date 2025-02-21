@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify, s
 import os
 import zipfile
 import subprocess
+from PIL import Image
 import threading
 from subprocess import Popen
 
@@ -10,7 +11,8 @@ app.secret_key = 'supersecretkey'  # 确保设置一个秘密密钥
 UPLOAD_FOLDER = 'uploads'
 TEST_FOLDER = 'test'
 RESULT_FOLDER = 'result'
-
+UPLOAD_FOLDER = 'annotations'  # 目标文件夹
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # 确保文件夹存在
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # 处理状态
@@ -34,7 +36,7 @@ def run_detection():
         # 打印 detect.py 的标准输出
         print("detect.py 输出:\n", result.stdout)
 
-        print("完成1")
+        # print("完成1")
 
     except subprocess.CalledProcessError as e:  # 捕获子进程返回的错误
         print(f"Subprocess error occurred: {e}")
@@ -42,8 +44,9 @@ def run_detection():
     except Exception as e:  # 捕获其他异常
         print(f"An unexpected error occurred: {e}")
     finally:
-        print("完成2")
+        # print("完成2")
         processing = False  # 标记为处理完成
+
 
 @app.route('/')
 def index():
@@ -64,6 +67,15 @@ def upload_file():
         # 解压缩文件
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extractall(TEST_FOLDER)
+
+        # 转换所有图片为 PNG 格式
+        for item in os.listdir(TEST_FOLDER):
+            if item.lower().endswith(('.jpg', '.jpeg', '.bmp', '.gif', '.tiff')):
+                img_path = os.path.join(TEST_FOLDER, item)
+                img = Image.open(img_path)
+                png_image_path = os.path.splitext(img_path)[0] + '.png'
+                img.save(png_image_path, 'PNG')  # 保存为 PNG 格式
+                os.remove(img_path)  # 删除原始文件
 
         # 执行 run_detection 函数
         # threading.Thread(target=run_detection).start()
@@ -92,12 +104,43 @@ def send_result(filename):
     return send_from_directory(RESULT_FOLDER, filename)
 
 
-@app.route('/generate-json', methods=['POST'])
-def generate_json():
-    annotations = request.json
-    with open('annotations.json', 'w') as json_file:
-        json.dump(annotations, json_file, indent=4)
-    return jsonify({'status': 'success'})
+@app.route('/annotations/<filename>')
+def get_annotations(filename):
+    txt_path = os.path.join(RESULT_FOLDER, filename.replace('.png', '.txt'))  # 假设图像为 .png 格式
+    annotations = []
+    try:
+        with open(txt_path, 'r') as f:
+            for line in f:
+                # 格式: <class_id> <x_center> <y_center> <width> <height>
+                parts = line.strip().split()
+                if len(parts) != 5:
+                    continue  # 跳过格式不正确的行
+                class_id, x_center, y_center, width, height = map(float, parts)
+
+                # 将 YOLO 规范转换为标注记录
+                annotations.append({
+                    'category': int(class_id),  # 类别编号
+                    'x': (x_center - width / 2) * 1024,  # 将相对坐标转换为绝对坐标
+                    'y': (y_center - height / 2) * 1024,
+                    'width': width * 1024,
+                    'height': height * 1024
+                })
+    except FileNotFoundError:
+        print(f"Annotations file not found: {txt_path}")
+    return jsonify(annotations)
+
+
+@app.route('/upload_annotations', methods=['POST'])
+def upload_annotations():
+    file_content = request.form['file_content']
+    file_name = request.form['file_name']
+
+    file_path = os.path.join(UPLOAD_FOLDER, f"{file_name}.txt")  # 组成完整的文件路径
+
+    with open(file_path, 'w') as f:
+        f.write(file_content)  # 保存内容
+
+    return jsonify({"message": "文件已成功保存."})
 
 
 if __name__ == '__main__':
