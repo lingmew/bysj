@@ -1,6 +1,0 @@
------ plain_text -----
-A.AUB=R
-B.CA≤B
-C.ANB=B
-D.A≤B
-

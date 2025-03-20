@@ -1,6 +1,0 @@
------ plain_text -----
-By the o-additivity axiom,P(A)==1P(AB）.Now if P(B)=O,
-P（AB)=OsinceBcAB.AndifP(B)>O,P(AB)=P（A|B)P(B)
-bydefinitionofthesymbolP(A|B).
-口
-

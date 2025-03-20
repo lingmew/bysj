@@ -8,6 +8,7 @@ D:
 cd D:\learn\bysj
 cd D:\learn\bysj\webtool
 python app.py
+flask run --port=5001
 
 图片：
 1024*1024
@@ -23,7 +24,7 @@ python app.py
 
 
 训练
-python train.py --data  --model  --epoch 50 --image-size 416 --batch-size 16 --project 
+python train.py --data ./dataset/data --model ./data/model --epoch 50 --image-size 1024 --batch-size 8 --pretrain ./model/doclayout_yolo_docstructbench_imgsz1024.pt --project ./model/train --device 0
 
 
  

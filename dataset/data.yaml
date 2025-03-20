@@ -1,0 +1,18 @@
+path: ../dataset/datasets # dataset root dir
+train: train.txt # train images 
+val: val.txt # val images 
+test: test.txt
+
+# Classes
+names:
+  0: title
+  1: plain text
+  2: abandon
+  3: figure
+  4: figure_caption
+  5: table
+  6: table_caption
+  7: table_footnote
+  8: isolate_formula
+  9: formula_caption
+

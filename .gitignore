@@ -1,0 +1,17 @@
+# 忽略所有的 .jpg 和 .png 图片
+*.jpg
+*.png
+
+# 忽略数据集目录（假设数据集存放在 dataset 目录下）
+# dataset/
+*.zip
+# 忽略所有的标注文件
+*.csv
+*.txt
+
+# 忽略所有的 .pt 文件
+*.pt
+
+# 忽略 Python 编译的字节码文件
+__pycache__/
+*.pyc

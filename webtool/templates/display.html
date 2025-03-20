@@ -1,21 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"> <!-- 设置字符集为UTF-8 -->
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- 设置视口以适应不同设备 -->
     <title>图像标注</title>
     <style>
-        canvas {
-            border: 1px solid black; /* 为画布添加边框 */
-            position: relative; /* 设置相对定位 */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f4f8; /* 背景颜色 */
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
+
+        /* 标题和链接的容器 */
+        .header {
+            display: flex; /* 使用flex布局 */
+            justify-content: space-between; /* 空间分配 */
+            width: 100%; /* 宽度100% */
+            margin-bottom: 20px; /* 标题下方的间距 */
+            align-items: center; /* 垂直对齐 */
+        }
+
+        #controls {
+            display: flex; /* 使用flex布局 */
+            align-items: center; /* 垂直对齐 */
+            width: 100%; /* 控件区域宽度 */
+            margin-bottom: 20px; /* 为控制区域添加底部间距 */
+        }
+
+        input[type="text"], select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 1em;
+        }
+
+        input[type="text"] {
+            flex: 1; /* 设置搜索框占用剩余空间 */
+            margin-right: 10px; /* 添加右间距以分隔两个控件 */
+        }
+
+        canvas {
+            border: 1px solid #333; /* 为画布添加边框 */
+            position: relative; /* 设置相对定位 */
+            margin-bottom: 20px; /* 添加画布的下边距 */
+            background-color: #ffffff; /* 画布背景颜色 */
+        }
+
         #annotationsList {
             margin-top: 10px; /* 为标注列表添加顶部间距 */
+            width: 100%; /* 使标注列表宽度相同 */
         }
+
         .annotation-item {
             display: flex; /* 使用flex布局 */
             align-items: center; /* 垂直居中 */
             margin-bottom: 5px; /* 为每个条目添加底部间距 */
+            padding: 10px;
+            background: #e9ecef; /* 列表项背景色 */
+            border-radius: 5px;
         }
 
         .annotation-buttons {
@@ -27,29 +74,89 @@
             background: red; /* 删除按钮背景为红色 */
             color: white; /* 删除按钮文字为白色 */
             border: none; /* 无边框 */
+            border-radius: 5px; /* 圆角边框 */
             cursor: pointer; /* 鼠标悬停时显示为手指 */
+            padding: 5px 10px; /* 内边距 */
+            transition: background-color 0.3s ease; /* 背景颜色变化过渡 */
         }
+
+        .delete-button:hover {
+            background: darkred; /* 悬停效果 */
+        }
+
+        .visible-button {
+            background: white; /* 显示按钮背景为白色 */
+            color: black; /* 显示按钮文字为黑色 */
+            border: 2px solid black; /* 设置边框颜色和宽度 */
+            border-radius: 5px; /* 圆角边框 */
+            cursor: pointer; /* 鼠标悬停时显示为手指 */
+            padding: 5px 10px; /* 内边距 */
+            transition: background-color 0.3s ease; /* 背景颜色变化过渡 */
+        }
+
+        .visible-button:hover {
+            background: #e2e2e2; /* 悬停效果 */
+        }
+        .visible-button.active { /* 选中状态的样式 */
+            background: #007bff; /* 选中显示的背景颜色 */
+            color: white; /* 选中时文字为白色 */
+        }
+
+        button {
+            background-color: #007bff; /* 按钮背景色 */
+            color: white; /* 按钮文字颜色 */
+            border: none; /* 去除边框 */
+            border-radius: 5px; /* 圆角 */
+            cursor: pointer; /* 鼠标样式 */
+            padding: 10px 15px; /* 内边距 */
+            font-size: 1em; /* 字体大小 */
+            transition: background-color 0.3s ease; /* 背景颜色变化过渡 */
+        }
+
+        button:hover {
+            background-color: #0056b3; /* 悬停效果 */
+        }
+
+        a {
+            margin-top: 20px;
+            text-decoration: none; /* 去除下划线 */
+            color: #007bff; /* 链接颜色 */
+            font-size: 1em; /* 字体大小 */
+        }
+
+        a:hover {
+            text-decoration: underline; /* 悬停下划线 */
+        }
+        textarea {
+            width: 100%; /* 使文本框宽度为100% */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box; /* 包含边框和内边距 */
+            font-size: 1em;
+           }
+
     </style>
 </head>
 <body>
 
-<h1>图像标注</h1>
-<input type="text" id="search" placeholder="搜索图像名称..." onkeyup="searchImages()">
-<!-- 搜索框，用户可以在这里输入图像名称以进行搜索 -->
+<div class="header">
+    <h1>图像标注</h1>
+    <a href="/">返回上传页面</a>
+</div>
 
-<select id="imageSelect" onchange="showImage(this.value)">
-    <option value="">选择图像</option> <!-- 默认选项 -->
-    {% for image in images %}
-        {% if image.endswith('.png') or image.endswith('.jpg') or image.endswith('.bmp') %}
-            <option value="{{ image }}">{{ image }}</option> <!-- 根据文件类型显示图像 -->
-        {% endif %}
-    {% endfor %}
-</select>
-
-<div id="imageDisplay" style="display:none;"> <!-- 用于显示图像和标注框 -->
-    <canvas id="annotationCanvas" width="1024" height="1024"></canvas> <!-- 画布大小设置为1024x1024 -->
+<div id="controls">
+    <input type="text" id="search" placeholder="搜索图像名称..." onkeyup="searchImages()">
+    <select id="imageSelect" onchange="showImage(this.value)">
+        <option value="">选择图像</option>
+        {% for image in images %}
+            {% if image.endswith('.png') or image.endswith('.jpg') or image.endswith('.bmp') %}
+                <option value="{{ image }}">{{ image }}</option> <!-- 根据文件类型显示图像 -->
+            {% endif %}
+        {% endfor %}
+    </select>
     <select id="categorySelect">
-        <option value="">选择类别</option> <!-- 默认选项 -->
+        <option value="">选择版面标注类别</option>
         <option value="0">title</option>
         <option value="1">plain text</option>
         <option value="2">abandon</option>
@@ -63,14 +170,32 @@
     </select>
     <button id="saveAnnotations">保存标注</button> <!-- 保存标注按钮 -->
     <button id="dealAnnotation">提取文本</button> <!-- 提取文本按钮 -->
-    <div id="annotationsList"></div> <!-- 用于显示已标注框的列表 -->
-
-
 </div>
 
-<a href="/">返回上传页面</a> <!-- 返回上传页面的链接 -->
+
+<div id="imageDisplay" style="display:none;"> <!-- 用于显示图像和标注框 -->
+    <canvas id="annotationCanvas" width="1024" height="1024"></canvas> <!-- 画布大小设置为1024x1024 -->
+    <div id="ocrResults" style="margin-left: 20px; max-width: 300px;display:none;">
+    <h3>OCR 结果</h3>
+    <div>
+        <h4>Title:</h4>
+        <textarea id="titleText" rows="4" cols="50" readonly></textarea>
+    </div>
+    <div>
+        <h4>Plain Text:</h4>
+        <textarea id="plainText" rows="4" cols="50" readonly></textarea>
+    </div>
+    <div>
+        <h4>Table Text:</h4>
+        <textarea id="tableText" rows="4" cols="50" readonly></textarea>
+    </div>
+    </div>
+
+    <div id="annotationsList"></div> <!-- 用于显示已标注框的列表 -->
+</div>
 
 <script>
+// 下面的JavaScript代码保持不变
     let currentImage = ''; // 当前图像名称
     let annotations = []; // 存储标注框
     let drawing = false; // 控制是否正在绘画
@@ -105,12 +230,20 @@
         "9": "formula_caption"
     };
 
+    // 用于清空OCR结果的函数
+    function clearOCRResults() {
+        document.getElementById('titleText').value = ''; // 清空题目文本框
+        document.getElementById('plainText').value = ''; // 清空正文文本框
+        document.getElementById('tableText').value = ''; // 清空表格文本框
+        document.getElementById('ocrResults').style.display = 'none'; // 隐藏结果部分
+    }
+
     function showImage(imageName) {
+        clearOCRResults(); // 清空OCR结果
         if (!imageName) {
             document.getElementById('imageDisplay').style.display = 'none';
             return; // 如果没有选择图像，隐藏图像区域并返回
         }
-
         const imageDisplay = document.getElementById('imageDisplay');
         const canvas = document.getElementById('annotationCanvas');
         const ctx = canvas.getContext('2d');
@@ -129,7 +262,7 @@
                     drawExistingAnnotations(ctx); // 绘制图像和标注框
                     updateAnnotationsList(); // 更新标注框列表
                 })
-                .catch(error => console.error('Error fetching annotations:', error)); // 异常处理
+                .catch(error => console.error('Error fetching annotations:', error));
         };
         img.onerror = function() {
             console.error("Error loading image:", img.src); // 图像加载错误处理
@@ -245,10 +378,12 @@
             buttonsContainer.className = 'annotation-buttons';
 
             const visibilityButton = document.createElement('button');
+             visibilityButton.className = 'visible-button' + (rect.visible ? ' active' : ''); // 根据当前状态添加类
             visibilityButton.innerText = rect.visible ? '隐藏' : '显示'; // 根据当前状态设置按钮文本
             visibilityButton.onclick = function () {
                 rect.visible = !rect.visible; // 切换可见性
                 visibilityButton.innerText = rect.visible ? '隐藏' : '显示'; // 更新按钮文本
+                visibilityButton.classList.toggle('active'); // 切换按钮的活动类
                 drawExistingAnnotations(document.getElementById('annotationCanvas').getContext('2d')); // 刷新图像
             };
 
@@ -263,6 +398,11 @@
             buttonsContainer.appendChild(visibilityButton);
             buttonsContainer.appendChild(deleteBtn);
 
+            // 在按钮容器与文本之间添加空隙
+            const space = document.createElement('div');
+            space.style.marginTop = '5px'; // 设置空隙的高度
+            buttonsContainer.appendChild(space); // 将空隙添加到按钮容器
+
             // 更新listItem的格式
             const textNode = document.createTextNode(`编号: ${index}, 类别: ${categoryName}, 位置: (x: ${rect.x.toFixed(2)}, y: ${rect.y.toFixed(2)}, 宽度: ${rect.width.toFixed(2)}, 高度: ${rect.height.toFixed(2)})`);
 
@@ -273,11 +413,6 @@
             annotationsList.appendChild(listItem); // 将列表项添加到标注列表
         });
     }
-
-
-
-
-
 
     // 根据索引删除标注框
     function deleteAnnotationByIndex(index) {
@@ -326,9 +461,21 @@
         .catch(error => console.error('Error:', error));
     };
 
+    // 识别文本
+    document.getElementById('dealAnnotation').onclick = function() {
+        // 发起ocr结果请求
+        fetch(`/extract_text/${currentImage}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('titleText').value = data.title || '';
+                document.getElementById('plainText').value = data.plain_text || '';
+                document.getElementById('tableText').value = data.table || '';
 
-
-
+                // 显示OCR结果部分
+                document.getElementById('ocrResults').style.display = 'block';
+            })
+            .catch(error => console.error('Error extracting text:', error));
+    };
 
     // 实现图像搜索功能
     function searchImages() {

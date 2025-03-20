@@ -1,7 +1,0 @@
------ figure_caption -----
-Figure4.ANcOVAforWBEmodel,the
-slopesofobservedandpredicteddiffered
-statisticallysignificantly.ObservedGinkgo
-differedfrommodels'predictionsmostin
-itsoptimizationfortotalmass.
-

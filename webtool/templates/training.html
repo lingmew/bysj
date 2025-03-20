@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模型训练</title>
+    <script>
+        async function startTraining() {
+            const data = {
+                data: document.getElementById('data').value,
+                model: document.getElementById('model').value,
+                epoch: document.getElementById('epoch').value,
+                optimizer: document.getElementById('optimizer').value,
+                momentum: document.getElementById('momentum').value,
+                lr0: document.getElementById('lr0').value,
+                warmup_epochs: document.getElementById('warmup-epochs').value,
+                batch_size: document.getElementById('batch-size').value,
+                image_size: document.getElementById('image-size').value,
+                mosaic: document.getElementById('mosaic').value,
+                pretrain: document.getElementById('pretrain').value,
+                val: document.getElementById('val').value,
+                val_period: document.getElementById('val-period').value,
+                plot: document.getElementById('plot').checked ? 1 : 0,
+                project: document.getElementById('project').value,
+                save_period: document.getElementById('save-period').value,
+                patience: document.getElementById('patience').value,
+            };
+
+            const response = await fetch('/model_training', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            const result = await response.json();
+            document.getElementById('output').innerText = JSON.stringify(result, null, 2);
+        }
+    </script>
+</head>
+<body>
+    <h1>模型训练</h1>
+    <form>
+        <label for="data">数据配置：</label>
+        <input type="text" id="data" required><br>
+
+        <label for="model">模型名称：</label>
+        <input type="text" id="model" required><br>
+
+        <label for="epoch">训练轮数：</label>
+        <input type="number" id="epoch" required><br>
+
+        <label for="optimizer">优化器：</label>
+        <input type="text" id="optimizer"><br>
+
+        <label for="momentum">动量：</label>
+        <input type="number" step="0.01" id="momentum" value="0.9"><br>
+
+        <label for="lr0">初始学习率：</label>
+        <input type="number" step="0.01" id="lr0" value="0.02"><br>
+
+        <label for="warmup-epochs">预热轮数：</label>
+        <input type="number" step="0.1" id="warmup-epochs" value="3"><br>
+
+        <label for="batch-size">批处理大小：</label>
+        <input type="number" id="batch-size" value="16"><br>
+
+        <label for="image-size">图像大小：</label>
+        <input type="number" id="image-size" required><br>
+
+        <label for="mosaic">马赛克比例：</label>
+        <input type="number" step="0.1" id="mosaic" value="1.0"><br>
+
+        <label for="pretrain">预训练模型：</label>
+        <input type="text" id="pretrain"><br>
+
+        <label for="val">验证：</label>
+        <input type="number" id="val" value="1"><br>
+
+        <label for="val-period">验证周期：</label>
+        <input type="number" id="val-period" value="1"><br>
+
+        <label for="plot">是否绘制：</label>
+        <input type="checkbox" id="plot"><br>
+
+        <label for="project">项目名：</label>
+        <input type="text" id="project" required><br>
+
+        <label for="save-period">保存周期：</label>
+        <input type="number" id="save-period" value="10"><br>
+
+        <label for="patience">耐心值：</label>
+        <input type="number" id="patience" value="100"><br>
+
+        <button type="button" onclick="startTraining()">开始训练</button>
+    </form>
+
+    <h2>输出:</h2>
+    <pre id="output"></pre>
+</body>
+</html>

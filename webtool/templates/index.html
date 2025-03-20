@@ -5,27 +5,156 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>版面分析</title>
     <style>
-        #loading {
-            display: none; /* 隐藏加载提示 */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff; /* 淡蓝色 */
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333; /* 深灰 */
+        }
+        form {
+            background-color: #fff; /* 表单背景 */
+            border-radius: 8px; /* 圆角 */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* 阴影效果 */
+            padding: 20px;
+            margin: auto;
+            max-width: 600px; /* 最大宽度 */
+        }
+        input[type="file"],
+        select,
+        input[type="submit"] {
+            width: calc(100% - 20px); /* 使输入框和选择框占满宽度，减去边距 */
+            padding: 10px;
+            margin: 10px 0; /* 输入框间距 */
+            border: 1px solid #ccc; /* 灰色 */
+            border-radius: 4px; /* 圆角 */
+            font-size: 16px; /* 字体大小 */
+        }
+        input[type="submit"] {
+            background-color: #007BFF; /* 蓝 */
+            color: white; /* 文字颜色 */
+            border: none; /* 去除边框 */
+            cursor: pointer; /* 鼠标手指 */
+        }
+        input[type="submit"]:hover {
+            background-color: #0056b3; /* 悬停更深的蓝 */
+        }
+        #loading, #message {
+            display: none; /* 隐藏加载提示和消息 */
             color: red;
+            margin: 10px 0;
+            text-align: center; /* 中间对齐 */
+        }
+        button {
+            background-color: #6c757d; /* 按钮颜色 */
+            color: white; /* 文字颜色 */
+            border: none; /* 去除边框 */
+            padding: 10px 15px; /* 内边距 */
+            border-radius: 4px; /* 圆角 */
+            cursor: pointer; /* 鼠标手指 */
+            font-size: 16px; /* 字体大小 */
+            margin-right: 10px; /* 按钮间距 */
+        }
+        button:hover {
+            background-color: #5a6268; /* 悬停效果 */
         }
     </style>
     <script>
         function showLoading() {
             document.getElementById("loading").style.display = "block"; // 显示加载信息
+            document.getElementById("message").style.display = "none"; // 隐藏任何先前的消息
+        }
+
+        function handleResponse(response) {
+            document.getElementById("loading").style.display = "none"; // 隐藏加载信息
+            document.getElementById("message").innerText = response.message; // 显示处理完成信息
+            document.getElementById("message").style.display = "block"; // 显示消息
+        }
+
+        function handleError(error) {
+            document.getElementById("loading").style.display = "none"; // 隐藏加载信息
+            document.getElementById("message").innerText = error.message; // 显示错误信息
+            document.getElementById("message").style.display = "block"; // 显示消息
+        }
+
+        function uploadFile(event) {
+            event.preventDefault(); // 防止表单默认提交
+
+            showLoading(); // 显示加载信息
+
+            const formData = new FormData(document.querySelector('form'));
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw err;
+                    });
+                }
+                return response.json();
+            })
+            .then(handleResponse)
+            .catch(handleError);
         }
     </script>
 </head>
 <body>
-    <h1>上传图像压缩包</h1>
-    <form action="/upload" method="post" enctype="multipart/form-data" onsubmit="showLoading()">
+    <h1>报关单随附单证版面分析工具</h1>
+    <form onsubmit="uploadFile(event)">
         <input type="file" name="file" accept=".zip" required>
-        <input type="submit" value="上传">
+        <br>
+        <label for="modelSelect">选择模型文件:</label>
+        <select id="modelSelect" name="selected_model" required>
+            <option value="" disabled selected>请选择模型文件</option>
+        </select>
+        <br>
+        <input type="submit" value="开始分析">
     </form>
     <div id="loading">处理正在进行，请稍候...</div>
-
-    <br><br>
-
-    <button onclick="window.location.href='{{ url_for('image_list') }}'">查看处理后的图像</button>
+    <div id="message"></div> <!-- 提示信息区域 -->
+    <br>
+    <div style="text-align: center;">
+        <button onclick="generateResultImage()">生成结果图</button>
+        <button onclick="window.location.href='{{ url_for('image_list') }}'">调整标注</button>
+        <button onclick="window.location.href='{{ url_for('model_management') }}'">模型管理</button>
+    </div>
+    <script>
+        // 页面加载时从后端获取模型文件列表
+        window.onload = function() {
+            fetch('/get_models')
+                .then(response => response.json())
+                .then(models => {
+                    const modelSelect = document.getElementById('modelSelect');
+                    models.forEach(model => {
+                        const option = document.createElement('option');
+                        option.value = model;
+                        option.textContent = model;
+                        modelSelect.appendChild(option);
+                    });
+                });
+        };
+    function generateResultImage() {
+        fetch('/generate_result_image', {
+            method: 'POST',
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('生成结果图失败');
+            }
+            return response.json();
+        })
+        .then(data => {
+            alert('结果图生成成功，保存在/output文件夹');
+        })
+        .catch(error => {
+            alert('错误: ' + error.message);
+        });
+    }
+    </script>
 </body>
 </html>

@@ -1,5 +1,0 @@
------ plain_text -----
-Tobecorrect,since P(A|B)isdefined onlywhen P(B)>O,wemust
-agreebyconventionthatintheaboveformula,P(A|B)P(B)=Owhenever
-P（B)=O.
-

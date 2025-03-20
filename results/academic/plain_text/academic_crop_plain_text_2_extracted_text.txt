@@ -1,8 +1,0 @@
------ plain_text -----
-ofthenumberofphotonstotheareaofthefocusedand
-unfocusedbeam.Theintensityoftheunfocusedbeamwas
-measuredwithastraightcapillaryof50umdiameter.The
-minimumbeamsizeattheexitdiameterofthecapillary
-wasused.Table2showsthevalueforthegainfactor
-togetherwithdifferentmeasuredparameters.
-

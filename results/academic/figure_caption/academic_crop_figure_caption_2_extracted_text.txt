@@ -1,4 +1,0 @@
------ figure_caption -----
-Figure11.MDLasafunctionoftheatomicnumberZfor
-differentsamples.
-

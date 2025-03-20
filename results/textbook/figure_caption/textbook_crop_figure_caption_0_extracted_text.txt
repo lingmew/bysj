@@ -1,3 +1,0 @@
------ figure_caption -----
-Figure10.Thebinarysymmetricchannel
-

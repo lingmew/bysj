@@ -7,7 +7,7 @@ def extract_text_from_image(image_path):
     """从给定图像中提取文本"""
     ocr = PaddleOCR(use_angle_cls=True, lang='ch', det_model_dir='./model/ch_PP-OCRv4_det_infer')  # 初始化 OCR 模型
     result = ocr.ocr(image_path, cls=True)  # 调用 OCR 进行识别
-
+    print(result)
     # 结果处理
     text_output = []
     if result:  # 检查结果是否有效
