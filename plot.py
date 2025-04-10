@@ -74,7 +74,7 @@ def draw_boxes(image_path, annotations_path, output_path):
 
 
 if __name__ == '__main__':
-    input_file = 'test/0000.png'
-    annotated_file = 'annotations/0000.txt'
-    output_file = 'output/0000_result.png'
+    input_file = 'datasets/0.png'
+    annotated_file = 'datasets/02.txt'
+    output_file = 'datasets/02_result.png'
     draw_boxes(input_file, annotated_file, output_file)

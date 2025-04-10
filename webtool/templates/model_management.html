@@ -117,7 +117,7 @@
                 <td>{{ model.modified_time | to_datetime }}</td>
                 <td>
                     <button class="choose-button" onclick="performTest('{{ model.name }}')">测试</button>
-                    <button class="choose-button" onclick="performFineTune('{{ model.name }}')">微调</button>
+                    <button class="choose-button" onclick="window.location.href='/training?model={{ model.name }}'">微调</button>
                     <button class="delete-button" onclick="performDelete('{{ model.name }}')">删除</button>
                 </td>
             </tr>
@@ -139,10 +139,6 @@
     <script>
         function performTest(modelName) {
             alert("开始测试模型: " + modelName);
-        }
-
-        function performFineTune(modelName) {
-            alert("开始微调模型: " + modelName);
         }
 
         function performDelete(modelName) {

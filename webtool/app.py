@@ -7,9 +7,11 @@ import datetime
 from detect import process_images
 from model_info import get_model_info
 from waitress import serve
-from ocr import process_ocr, save_text_results, read_text_results
+from ocr import extract_text  # 导入 ocr.py 中的函数
 from merge import merge_overlapping_boxes
 from plot import draw_boxes
+from flask import Flask, request, jsonify
+
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # 确保设置一个秘密密钥
@@ -99,11 +101,13 @@ def get_annotations(filename):
                 parts = line.strip().split()
                 if len(parts) != 5:
                     continue  # 跳过格式不正确的行
-                class_id, x_center, y_center, width, height = map(float, parts)
+                # 明确将 class_id 转换为 int 类型
+                class_id = int(float(parts[0]))
+                x_center, y_center, width, height = map(float, parts[1:])
 
                 # 将 YOLO 规范转换为标注记录
                 annotations.append({
-                    'category': int(class_id),  # 类别编号
+                    'category': class_id,  # 类别编号
                     'x': (x_center - width / 2) * 1024,  # 将相对坐标转换为绝对坐标
                     'y': (y_center - height / 2) * 1024,
                     'width': width * 1024,
@@ -133,7 +137,7 @@ def generate_result_image():
     try:
         # 假设在annotations中有对应的.txt文件和test中有图片文件
         annotation_files = os.listdir(ANNOTATIONS_FOLDER)
-
+        print("开始生成结果图")
         for annotation_file in annotation_files:
             # 获取图片文件路径
             image_name = annotation_file.replace('.txt', '.png')
@@ -145,20 +149,28 @@ def generate_result_image():
 
             # 绘制结果图
             draw_boxes(image_path, annotation_path, output_path)
-
+        print("结果图生成成功")
         return jsonify({"message": "结果图生成成功"})
 
     except Exception as e:
         return jsonify({"message": f"发生错误: {str(e)}"}), 500
 
 
-@app.route('/extract_text/<image_name>')
-def extract_text(image_name):
+@app.route('/extract_text/<image_name>', methods=['POST'])
+def extract_text_route(image_name):
     image_path = os.path.join(TEST_FOLDER, image_name)
-    category_name = os.path.splitext(image_name)[0] + '.txt'
-    category_path = os.path.join(ANNOTATIONS_FOLDER, category_name)
-    text = process_ocr(image_path, category_path)
-    return jsonify(text)
+    annotations_str = request.form.get('annotations')
+    annotations = []
+    for line in annotations_str.split('\n'):
+        parts = line.strip().split()
+        if len(parts) == 5:
+            # 明确将 class_id 转换为 int 类型
+            category = int(float(parts[0]))
+            x_center, y_center, width, height = map(float, parts[1:])
+            annotations.append((category, x_center, y_center, width, height))
+
+    result = extract_text(image_path, annotations)
+    return jsonify(result)
 
 
 @app.route('/get_models', methods=['GET'])
@@ -198,61 +210,49 @@ def upload_model():
     file.save(os.path.join(app.config['MODEL_FOLDER'], file.filename))
     return jsonify({"message": "模型上传成功!"}), 200
 
-
-@app.route('/model_training')
+@app.route('/model_training', methods=['POST'])
 def model_training():
-    # 从请求中获取参数
-    data = request.json
-    # 这里假设传入的数据为JSON格式
-    data_yaml = data.get('data')
-    model_name = data.get('model')
-    epochs = data.get('epoch')
-    optimizer = data.get('optimizer', 'auto')
-    momentum = data.get('momentum', 0.9)
-    lr0 = data.get('lr0', 0.02)
-    warmup_epochs = data.get('warmup-epochs', 3.0)
-    batch_size = data.get('batch-size', 8)
-    image_size = data.get('image-size', 1024)
-    mosaic = data.get('mosaic', 1.0)
-    pretrain = data.get('pretrain', None)
-    val = data.get('val', 1)
-    val_period = data.get('val-period', 1)
-    plot = data.get('plot', 0)
-    project = data.get('project')
-    save_period = data.get('save-period', 10)
-    patience = data.get('patience', 100)
+    data = request.get_json()
 
-    # 构建命令行参数
-    cmd = [
-        'python', 'train.py',
-        '--data', data_yaml,
-        '--model', model_name,
-        '--epoch', str(epochs),
-        '--optimizer', optimizer,
-        '--momentum', str(momentum),
-        '--lr0', str(lr0),
-        '--warmup-epochs', str(warmup_epochs),
-        '--batch-size', str(batch_size),
-        '--image-size', str(image_size),
-        '--mosaic', str(mosaic),
-        '--pretrain', pretrain if pretrain is not None else '',
-        '--val', str(val),
-        '--val-period', str(val_period),
-        '--plot', str(plot),
-        '--project', project,
-        '--save-period', str(save_period),
-        '--patience', str(patience)
-    ]
+    # 生成训练命令
+    command = "python train.py"
+    for key, value in data.items():
+        if isinstance(value, bool):
+            if value:
+                command += f" --{key}"
+        elif value is not None:
+            command += f" --{key} {value}"
 
-    # 执行训练命令
-    try:
-        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
-        # 返回结果成功的消息
-        return jsonify({"message": "Training started successfully!", "output": result.stdout}), 200
-    except subprocess.CalledProcessError as e:
-        # 处理潜在的错误
-        return jsonify({"error": "An error occurred during training.", "details": e.stderr}), 500
+    result = {
+        "message": "训练请求已接收",
+        "command": command
+    }
 
+    return jsonify(result)
+
+@app.route('/batch_ocr', methods=['POST'])
+def batch_ocr():
+    annotations_folder = 'annotations'
+    test_folder = 'test'
+    for annotation_file in os.listdir(annotations_folder):
+        if annotation_file.endswith('.txt'):
+            image_name = annotation_file.replace('.txt', '.png')
+            image_path = os.path.join(test_folder, image_name)
+            annotation_path = os.path.join(annotations_folder, annotation_file)
+            with open(annotation_path, 'r') as f:
+                annotations = []
+                for line in f:
+                    parts = line.strip().split()
+                    if len(parts) == 5:
+                        category, x_center, y_center, width, height = map(float, parts)
+                        annotations.append((category, x_center, y_center, width, height))
+            result = extract_text(image_path, annotations)
+    return jsonify({"message": "批量 OCR 识别完成"})
+
+@app.route('/training')
+def training():
+    model_name = request.args.get('model')
+    return render_template('training.html', model=model_name)
 
 if __name__ == '__main__':
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)

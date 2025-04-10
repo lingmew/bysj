@@ -4,8 +4,66 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>模型训练</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        form {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin: auto;
+            max-width: 600px;
+        }
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 10px 15px;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-top: 20px;
+        }
+        pre {
+            background-color: #f4f4f4;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px auto;
+            max-width: 600px;
+            white-space: pre-wrap;
+        }
+    </style>
     <script>
         async function startTraining() {
+            const modelName = "{{ model }}";
             const data = {
                 data: document.getElementById('data').value,
                 model: document.getElementById('model').value,
@@ -13,16 +71,19 @@
                 optimizer: document.getElementById('optimizer').value,
                 momentum: document.getElementById('momentum').value,
                 lr0: document.getElementById('lr0').value,
-                warmup_epochs: document.getElementById('warmup-epochs').value,
-                batch_size: document.getElementById('batch-size').value,
-                image_size: document.getElementById('image-size').value,
+                'warmup-epochs': document.getElementById('warmup-epochs').value,
+                'batch-size': document.getElementById('batch-size').value,
+                'image-size': document.getElementById('image-size').value,
                 mosaic: document.getElementById('mosaic').value,
-                pretrain: document.getElementById('pretrain').value,
+                pretrain: modelName,
                 val: document.getElementById('val').value,
-                val_period: document.getElementById('val-period').value,
+                'val-period': document.getElementById('val-period').value,
                 plot: document.getElementById('plot').checked ? 1 : 0,
-                project: document.getElementById('project').value,
-                save_period: document.getElementById('save-period').value,
+                project: `./model/${modelName}_train`,
+                resume: document.getElementById('resume').checked,
+                workers: document.getElementById('workers').value,
+                device: document.getElementById('device').value,
+                'save-period': document.getElementById('save-period').value,
                 patience: document.getElementById('patience').value,
             };
 
@@ -35,24 +96,24 @@
             });
 
             const result = await response.json();
-            document.getElementById('output').innerText = JSON.stringify(result, null, 2);
+            document.getElementById('command').innerText = result.command;
         }
     </script>
 </head>
 <body>
     <h1>模型训练</h1>
     <form>
-        <label for="data">数据配置：</label>
-        <input type="text" id="data" required><br>
+        <label for="data">数据集参数：</label>
+        <input type="text" id="data" value="./dataset/data" required><br>
 
-        <label for="model">模型名称：</label>
-        <input type="text" id="model" required><br>
+        <label for="model">模型参数：</label>
+        <input type="text" id="model" value="./dataset/model" required><br>
 
         <label for="epoch">训练轮数：</label>
-        <input type="number" id="epoch" required><br>
+        <input type="number" id="epoch" value="100" required><br>
 
         <label for="optimizer">优化器：</label>
-        <input type="text" id="optimizer"><br>
+        <input type="text" id="optimizer" value="auto"><br>
 
         <label for="momentum">动量：</label>
         <input type="number" step="0.01" id="momentum" value="0.9"><br>
@@ -61,19 +122,22 @@
         <input type="number" step="0.01" id="lr0" value="0.02"><br>
 
         <label for="warmup-epochs">预热轮数：</label>
-        <input type="number" step="0.1" id="warmup-epochs" value="3"><br>
+        <input type="number" step="0.1" id="warmup-epochs" value="3.0"><br>
 
         <label for="batch-size">批处理大小：</label>
-        <input type="number" id="batch-size" value="16"><br>
+        <input type="number" step="2" id="batch-size" value="8"><br>
 
         <label for="image-size">图像大小：</label>
-        <input type="number" id="image-size" required><br>
+        <input type="number" id="image-size" value="1024" required><br>
 
         <label for="mosaic">马赛克比例：</label>
         <input type="number" step="0.1" id="mosaic" value="1.0"><br>
 
         <label for="pretrain">预训练模型：</label>
-        <input type="text" id="pretrain"><br>
+        <input type="text" id="pretrain" value="{{ model }}"><br>
+
+        <label for="project">项目名：</label>
+        <input type="text" id="project" value="./model/{{ model }}_train" required><br>
 
         <label for="val">验证：</label>
         <input type="number" id="val" value="1"><br>
@@ -85,7 +149,16 @@
         <input type="checkbox" id="plot"><br>
 
         <label for="project">项目名：</label>
-        <input type="text" id="project" required><br>
+        <input type="text" id="project" value="./model/" required><br>
+
+        <label for="resume">是否恢复训练：</label>
+        <input type="checkbox" id="resume"><br>
+
+        <label for="workers">工作线程数：</label>
+        <input type="number" id="workers" value="4"><br>
+
+        <label for="device">设备：</label>
+        <input type="text" id="device" value="0,1,2,3,4,5,6,7"><br>
 
         <label for="save-period">保存周期：</label>
         <input type="number" id="save-period" value="10"><br>
@@ -96,7 +169,7 @@
         <button type="button" onclick="startTraining()">开始训练</button>
     </form>
 
-    <h2>输出:</h2>
-    <pre id="output"></pre>
+    <h2>生成的训练命令:</h2>
+    <pre id="command"></pre>
 </body>
 </html>

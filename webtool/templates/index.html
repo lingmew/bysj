@@ -101,6 +101,18 @@
             .then(handleResponse)
             .catch(handleError);
         }
+        function batchOCR() {
+            fetch('/batch_ocr', {
+                method: 'POST'
+            })
+           .then(response => response.json())
+           .then(data => {
+                alert(data.message);
+            })
+           .catch(error => {
+                alert('错误: ' + error.message);
+            });
+        }
     </script>
 </head>
 <body>
@@ -122,6 +134,7 @@
         <button onclick="generateResultImage()">生成结果图</button>
         <button onclick="window.location.href='{{ url_for('image_list') }}'">调整标注</button>
         <button onclick="window.location.href='{{ url_for('model_management') }}'">模型管理</button>
+        <button onclick="batchOCR()">版面识别批处理</button> 
     </div>
     <script>
         // 页面加载时从后端获取模型文件列表
